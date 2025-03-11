@@ -1,3 +1,4 @@
+import time
 from dateutil import parser
 from database import Database
 
@@ -7,6 +8,32 @@ from selenium.webdriver import ActionChains
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.service import Service as ChromeService
 
+def switch_periods(driver):
+    """
+    Функция для переключения периодов графика
+    """
+
+    # Список для периодов
+    periods = ["//button[.//div[text()='Полгода']]", "//button[.//div[text()='Год']]", 
+               "//button[.//div[text()='Всё время']]"]
+ 
+    # Проходимся по списку и переключаем кнопки
+    for period in periods:
+        try:
+            # Находим кнопку и кликаем
+            button = driver.find_element(By.XPATH, period)
+            button.click()
+            time.sleep(1) 
+        except Exception as e:
+            print(f"Ошибка при нажатии на кнопку: {e}")
+
+    # Возвращаемся к периоду "Год"
+    try:
+        year_button = driver.find_element(By.XPATH, periods[1])
+        year_button.click()
+        time.sleep(1)  
+    except Exception as e:
+        print(f"Ошибка при возврате к периоду 'Год': {e}")
 
 
 def main():
@@ -20,12 +47,13 @@ def main():
     try:
         driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
         driver.get("https://www.tbank.ru/invest/indexes/TIPOUS/")
-
-        chart = driver.find_element(By.XPATH, "//div[@data-qa-file='ChartLinear']")
+        
         element = driver.find_element(By.XPATH, "//div[@data-qa-file='IndexOverview']")
-
         # Скролл до конца графика
         driver.execute_script("arguments[0].scrollIntoView(false);", element)
+        
+        switch_periods(driver)
+        chart = driver.find_element(By.XPATH, "//div[@data-qa-file='ChartLinear']")
         chart_width = chart.size['width']
 
         actions = ActionChains(driver)
